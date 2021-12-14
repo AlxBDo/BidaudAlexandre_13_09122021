@@ -2,14 +2,16 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { createGlobalStyle } from 'styled-components';
+import { Provider } from 'react-redux';
 
 import './index.css';
 import reportWebVitals from './reportWebVitals';
 import Header from './components/header';
 import Footer from './components/footer'
 import Home from './pages/home';
-import SignIn from './pages/signIn';
-import User from './pages/user';
+import Login from './pages/login';
+import Profil from './pages/profil';
+import store from './utils/store';
 
 const GlobalStyle = createGlobalStyle`
   html {
@@ -28,18 +30,20 @@ const GlobalStyle = createGlobalStyle`
 `
 
 ReactDOM.render(
-  <React.StrictMode>
-    <Router>
-      <GlobalStyle />
-      <Header />
-      <Routes>
-        <Route exact path="/" element={<Home />} />
-        <Route exact path="/sign-in" element={<SignIn />} />
-        <Route exact path="/user" element={<User />} />
-      </Routes>
-      <Footer />
-    </Router>
-  </React.StrictMode>,
+  <Provider store={store}>
+    <React.StrictMode>
+      <Router>
+        <GlobalStyle />
+        <Header />
+        <Routes>
+          <Route exact path="/" element={<Home />} />
+          <Route exact path="/login" element={<Login />} />
+          <Route exact path="/profil" element={<Profil />} />
+        </Routes>
+        <Footer />
+      </Router>
+    </React.StrictMode>
+  </Provider>,
   document.getElementById('root')
 );
 

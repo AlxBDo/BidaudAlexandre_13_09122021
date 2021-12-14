@@ -64,7 +64,8 @@ const TransactionButton = styled.button`
     color: #fff;
 `
 
-function User(){
+function Profil(){
+
     return(
         <MainFlex $bgColor={backgroundColorDark}>
             <HeaderMain>
@@ -106,4 +107,4 @@ function User(){
     )
 }
 
-export default User
+export default Profil
