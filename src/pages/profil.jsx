@@ -1,5 +1,8 @@
-import styled from "styled-components";
+import { useNavigate } from 'react-router-dom'
+import styled from 'styled-components'
+import { useSelector } from 'react-redux'
 
+import { selectLogin } from '../utils/selectors'
 import {MainFlex, backgroundColorDark} from "../utils/style"
 
 const AccountAmount = styled.p`
@@ -65,6 +68,10 @@ const TransactionButton = styled.button`
 `
 
 function Profil(){
+    const navigate = useNavigate()
+    const login = useSelector(selectLogin())
+
+    if(login.status !== "loggedin"){ navigate("/login") }
 
     return(
         <MainFlex $bgColor={backgroundColorDark}>

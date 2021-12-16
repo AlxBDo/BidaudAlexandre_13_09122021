@@ -62,15 +62,14 @@ function Login(){
     const dispatch = useDispatch()
     const navigate = useNavigate()
     const login = useSelector(selectLogin())
-    
+
     useEffect(() =>{
-        if(login.status === "resolved"){
-            console.log(login)
-            window.setTimeout(() => {
+        if(login.status === "loggedin"){
+            window.setTimeout(() => { 
                 navigate('/profil')
             }, 2000)
         }
-    }, [login, navigate])
+    }, [login, navigate, dispatch])
 
     function submitLoginForm(e){
         e.preventDefault()
@@ -86,7 +85,13 @@ function Login(){
             document.getElementById('validation-password').innerHTML = "PASSWORD IS REQUIRIED !"
             return false
         }
-        dispatch(loginAction.fetchOrUpdateLogin(document.getElementById("username").value, document.getElementById("password").value))
+        dispatch(
+            loginAction.authenticate(
+                document.getElementById("username").value, 
+                document.getElementById("password").value,
+                document.getElementById("remember-me").checked
+            )
+        )
         return true
     }
 
@@ -95,7 +100,7 @@ function Login(){
             <SignInContent>
                 <i className="fa fa-user-circle sign-in-icon"></i>
                 <h1>Sign In</h1>
-                {login.status !== "resolved" ? (
+                {login.status !== "loggedin" ? (
                     <form onSubmit={submitLoginForm}>
                         <InputWrapper>
                             <InputWrapperLabel htmlFor="username">Username</InputWrapperLabel>
