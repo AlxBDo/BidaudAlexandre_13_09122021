@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { selectLogin, selectLoginHeaderDisplay, selectConsultApi } from '../utils/selectors'
 import * as loginAction from '../features/login'
+import * as storageServiceAction from '../features/storageService'
 
 import logoImg from "../assets/argentBankLogo.png"
 
@@ -43,15 +44,15 @@ function Header(){
     const location = useLocation()
     const navigate = useNavigate()
     const { loginRoute, loginClassName, loginText } = useSelector(selectLoginHeaderDisplay())
-    const userName = login.status === "loggedin" ? localStorage.getItem("userFirstName") : null
+    const userName = login.status === "loggedin" ? dispatch(storageServiceAction.getItem("userFirstName")) : null
     const loginOnclick =  (e)=>{ 
         e.preventDefault()
-        if(login.status !== "loggedout"){ dispatch(loginAction.loggedout()) }
+        if(login.status !== "loggedout"){ dispatch(loginAction.endLogin()) }
         if(location.pathname !== loginRoute){ navigate(loginRoute)}
     }
 
     useEffect(()=>{
-        if(login.status === "start" ){ dispatch(loginAction.startLogin()) }
+        if(login.status === "start" ){ dispatch(loginAction.startLogin()) } 
         if(consultApi.status === 'resolved'){
             if(consultApi.data.body.token){
                 dispatch(
@@ -61,7 +62,7 @@ function Header(){
                     )
                 )
             } else { dispatch(loginAction.validUser(consultApi.data)) }
-        }
+        } else if(consultApi.status === 'rejected'){ dispatch(loginAction.error(consultApi.error)) }
     }, [login, dispatch, consultApi])
 
     return (

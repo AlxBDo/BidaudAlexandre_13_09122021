@@ -7,6 +7,14 @@ import { selectLogin } from '../utils/selectors'
 import * as loginAction from '../features/login'
 import {MainFlex, backgroundColorDark} from "../utils/style"
 
+
+const ErrorMessageContainer = styled.div`
+    color: white;
+    background-color: red;
+    margin: 20px auto 0;
+    padding: 5px 10px 10px
+`
+
 const InputRemember = styled.div`
     display: flex;
 `
@@ -100,7 +108,12 @@ function Login(){
             <SignInContent>
                 <i className="fa fa-user-circle sign-in-icon"></i>
                 <h1>Sign In</h1>
-                {login.status !== "loggedin" ? (
+                {login.status === "pending" ? (<div>Connexion en cours...</div>) : login.status === "loggedin" ? (
+                    <div>
+                        Connexion réussie ! 
+                        <p>Vous allez être redirigé vers la page profil dans 2 minutes.</p>
+                    </div>
+                ) : (
                     <form onSubmit={submitLoginForm}>
                         <InputWrapper>
                             <InputWrapperLabel htmlFor="username">Username</InputWrapperLabel>
@@ -117,12 +130,13 @@ function Login(){
                             <InputRememberLabel htmlFor="remember-me">Remember me</InputRememberLabel>
                         </InputRemember>
                         <SignInButton>Sign In</SignInButton>
+                        {login.error !== null && (
+                            <ErrorMessageContainer>
+                                <p>Login Failled !</p>
+                                Error message : {login.error}
+                            </ErrorMessageContainer>
+                        )}
                     </form>
-                ) : (
-                    <div>
-                        Connexion réussie ! 
-                        <p>Vous allez être redirigé vers la page profil dans 2 minutes.</p>
-                    </div>
                 )}
             </SignInContent>
         </MainFlex>

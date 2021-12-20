@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 
 import { selectLogin } from '../utils/selectors'
 import {MainFlex, backgroundColorDark} from "../utils/style"
+import * as storageServiceAction from '../features/storageService'
 
 const AccountAmount = styled.p`
     margin: 0;
@@ -50,6 +51,14 @@ const EditButton = styled.button`
     padding: 10px;
 `
 
+const EditFormButton = styled.button`
+    border-color: #00bc77;
+    background-color: #fff;
+    color: #00bc77;
+    font-weight: bold;
+    padding: 10px;
+`
+
 const HeaderMain = styled.div`
     color: #fff;
     margin-bottom: 2rem;
@@ -67,17 +76,89 @@ const TransactionButton = styled.button`
     color: #fff;
 `
 
+const EditUserNameForm = styled.form`
+    display: none;
+    margin: 10px auto
+`
+
+const EditUserNameInput = styled.input`
+    border: none;
+    padding: 10px;
+    margin: 10px
+`
+
 function Profil(){
     const navigate = useNavigate()
+    const dispatch = useDispatch()
     const login = useSelector(selectLogin())
+    const firstName = dispatch(storageServiceAction.getItem('userFirstName'))
+    const lastName = dispatch(storageServiceAction.getItem("userLastName"))
+
+    const editUserFormService = {
+    
+        editUserForm: null,
+        firstNameH1: null,
+        firstNameInput: null,
+        lastNameInput: null,
+    
+        init: function(){
+            editUserFormService.editUserForm = document.getElementById("edit-username-form")
+            editUserFormService.firstNameH1 = document.getElementById("firstname")
+            editUserFormService.firstNameInput = document.getElementById("firstname-ipt")
+            editUserFormService.lastNameInput = document.getElementById("lastname-ipt")
+        },
+    
+        display : function(e){
+            e.preventDefault()
+            if(editUserFormService.editUserForm === null){editUserFormService.init()}
+            editUserFormService.editUserForm.style.display = "block"
+            editUserFormService.firstNameH1.style.display = "none"
+        },
+    
+        submit : function(e, buttonId){
+            e.preventDefault()
+            if(buttonId === "save-edit"){
+                console.log("Save modification to db !")
+                editUserFormService.firstNameH1.textContent = editUserFormService.firstNameInput.value
+            } else if(buttonId === "cancel-edit"){
+                editUserFormService.firstNameInput.value = firstName
+                editUserFormService.lastNameInput.value = lastName
+            }
+            editUserFormService.editUserForm.style.display = "none"
+            editUserFormService.firstNameH1.style.display = "block"
+        }
+        
+    }
+
+    const getEditFormButton = (text) => {
+        const id = text.toLowerCase() + "-edit"
+        return(
+            <EditFormButton id={id} onClick={ (e) => { editUserFormService.submit(e, id) } }>{text}</EditFormButton>
+        )
+    }
 
     if(login.status !== "loggedin"){ navigate("/login") }
 
     return(
         <MainFlex $bgColor={backgroundColorDark}>
             <HeaderMain>
-                <h1>Welcome back<br />Tony Jarvis!</h1>
-                <EditButton>Edit Name</EditButton>
+                <h1>Welcome back<br /><span id="firstname">{firstName}</span></h1>
+                <EditUserNameForm id="edit-username-form" onSubmit={(e) => { e.preventDefault() }}>
+                    <EditUserNameInput 
+                        type="text"
+                        id="firstname-ipt" 
+                        defaultValue={firstName}
+                    /> 
+                    <EditUserNameInput 
+                        type="text"
+                        id="lastname-ipt" 
+                        defaultValue={lastName}
+                    />
+                    <div>
+                        {getEditFormButton("Save")} {getEditFormButton("Cancel")}
+                    </div>
+                </EditUserNameForm>
+                <EditButton onClick={editUserFormService.display}>Edit Name</EditButton>
             </HeaderMain>
             <h2 className="sr-only">Accounts</h2>
             <AccountsSection>

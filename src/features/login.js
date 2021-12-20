@@ -2,6 +2,7 @@ import { selectLogin } from "../utils/selectors";
 import { createSlice } from '@reduxjs/toolkit'
 
 import * as consultApiAction from '../features/consultApi'
+import * as storageServiceAction from '../features/storageService'
 
 const initialState = {
     status: 'start',
@@ -18,9 +19,17 @@ export function authenticate(userEmail, userPassword, rememberUser = false) {
       return
     }
     dispatch(actions.fetching(rememberUser))
-    localStorage.setItem('userEmail', userEmail)
-    localStorage.setItem('userPassword', userPassword)
+    dispatch(storageServiceAction.saveItem('userEmail', userEmail))
+    dispatch(storageServiceAction.saveItem('userPassword', userPassword))
     dispatch(fetchApiToken(userEmail, userPassword))
+  }
+}
+
+export function endLogin(){
+  return async (dispatch, getState) => {
+    const login = selectLogin()
+    dispatch(storageServiceAction.close(!login(getState()).rememberUser))
+    dispatch(actions.loggedout())
   }
 }
 
@@ -28,6 +37,8 @@ export function validAuthentication(data, rememberUser){
   return async (dispatch) => {
     dispatch(consultApiAction.clear())
     if(data.body.token.length > 10 && data.status === 200){
+      dispatch(storageServiceAction.saveItem('token', data.body.token, true))
+      dispatch(storageServiceAction.saveItem('rememberUser', rememberUser, false, false))
       dispatch(actions.authentication(data.body.token, rememberUser))
       dispatch(fetchApiUser(data.body.token))
     } else {
@@ -40,9 +51,9 @@ export function validAuthentication(data, rememberUser){
 export function validUser(data){
   return async (dispatch) => {
     if(data.status === 200 && data.body.firstName && data.body.lastName && data.body.id){
-      localStorage.setItem("userFirstName", data.body.firstName)
-      localStorage.setItem("userLastName", data.body.lastName)
-      localStorage.setItem("userId", data.body.id)
+      dispatch(storageServiceAction.saveItem("userFirstName", data.body.firstName))
+      dispatch(storageServiceAction.saveItem("userLastName", data.body.lastName))
+      dispatch(storageServiceAction.saveItem("userId", data.body.id))
       dispatch(actions.loggedin())
     } else {
       dispatch(actions.loggedout())
@@ -77,17 +88,18 @@ function fetchApiUser(token){
 
 export function startLogin(){
     return async (dispatch, getState) => {
-      if(sessionStorage.getItem('token')){
-        dispatch(actions.loggedin(sessionStorage.getItem('token'), localStorage.getItem('rememberUser')))
-      } else if(localStorage.getItem('rememberUser')){
+      let token = storageServiceAction.getItem('token', true)
+      let rememberUser = storageServiceAction.getItem('rememberUser', false)
+      if(token){ dispatch(actions.loggedin(token, rememberUser))
+      } else if(rememberUser){
         const login = selectLogin()
         const status = login(getState()).status
         if (status === 'pending') {
           return
         }
         dispatch(actions.fetching(true))
-        dispatch(fetchApiToken(localStorage.getItem('userEmail'), localStorage.getItem('userPassword')))
-      } else { actions.loggedout() }
+        dispatch(fetchApiToken(storageServiceAction.getItem('userEmail'), storageServiceAction.getItem('userPassword')))
+      } else { dispatch(actions.loggedout()) }
       return
     }
 }
@@ -96,16 +108,23 @@ const { actions, reducer } = createSlice({
   name: 'login',
   initialState,
   reducers: {
+    error: {
+      prepare: (errorMessage) => ({
+        payload: errorMessage,
+      }),
+      reducer: (draft, action) =>{
+        draft.error = action.payload !== "Network Error" ? "Username or Password are wrong." : 'Server is offline'
+        draft.status = 'error'
+        return
+      }
+    },
     fetching: {
       prepare: (rememberUser) => ({
         payload: rememberUser,
       }),
       reducer: (draft, action) =>{
         draft.rememberUser = action.payload
-        if (draft.status === 'loggedout') {
-          draft.status = 'pending'
-          return
-        }
+        draft.status = 'pending'
         return
       }
     },
@@ -117,8 +136,6 @@ const { actions, reducer } = createSlice({
         if(action.payload.token.length > 10) {
           draft.token =  action.payload.token
           draft.rememberUser =  action.payload.rememberUser
-          sessionStorage.setItem('token', draft.token)
-          localStorage.setItem('rememberUser', draft.rememberUser)
         } else {
           draft.status = "loggedout"
           draft.error = "Wrong Token !"
@@ -134,8 +151,6 @@ const { actions, reducer } = createSlice({
       draft.status = 'loggedout'
       draft.token = null
       draft.error = null
-      localStorage.clear()
-      sessionStorage.clear()
       return
     },
     start: (draft) => {
@@ -145,6 +160,6 @@ const { actions, reducer } = createSlice({
   },
 })
 
-export const {authentication, loggedin, loggedout} = actions
+export const {authentication, error, loggedin, loggedout} = actions
 
 export default reducer

@@ -37,7 +37,7 @@ export function fetchOrUpdateDataApi(route, method, requestParams, config = null
         : await getAxiosPutRequest(route, requestParams, config) 
       dispatch(actions.resolved(apiResponse.data))
     } catch (error) {
-      dispatch(actions.rejected(error))
+      dispatch(actions.rejected(error.message))
     }
     return
   }
@@ -76,6 +76,7 @@ const { actions, reducer } = createSlice({
         draft.status = 'rejected'
         draft.error = action.payload
         draft.data = null
+        console.error("consultApi - Request is rejected : ", action.payload)
         return
       }
       return
