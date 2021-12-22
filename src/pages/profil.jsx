@@ -1,10 +1,12 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import { useSelector, useDispatch } from 'react-redux'
-
 import { selectLogin } from '../utils/selectors'
 import {MainFlex, backgroundColorDark} from "../utils/style"
+import * as consultApiAction from '../features/consultApi'
 import * as storageServiceAction from '../features/storageService'
+import { userService } from "../services/userService"
 
 const AccountAmount = styled.p`
     margin: 0;
@@ -93,7 +95,7 @@ function Profil(){
     const login = useSelector(selectLogin())
     const firstName = dispatch(storageServiceAction.getItem('userFirstName'))
     const lastName = dispatch(storageServiceAction.getItem("userLastName"))
-
+ 
     const editUserFormService = {
     
         editUserForm: null,
@@ -108,24 +110,58 @@ function Profil(){
             editUserFormService.lastNameInput = document.getElementById("lastname-ipt")
         },
     
-        display : function(e){
+        display: function(e){
             e.preventDefault()
-            if(editUserFormService.editUserForm === null){editUserFormService.init()}
-            editUserFormService.editUserForm.style.display = "block"
-            editUserFormService.firstNameH1.style.display = "none"
+            if(editUserFormService.editUserForm === null){ editUserFormService.init() }
+            editUserFormService.displayForm()
+        },
+
+        displayForm: function(display = true){
+            let displayItem = display ? { form: 'block', h1 : 'none'} : { form: 'none', h1 : 'block'} 
+            editUserFormService.editUserForm.style.display = displayItem.form
+            editUserFormService.firstNameH1.style.display = displayItem.h1
+        },
+
+        errorDisplay: function(message){
+            // TODO user message display
+            console.error('EDIT USER FORM ERROR : ', message)
         },
     
-        submit : function(e, buttonId){
+        submit: function(e, buttonId){
             e.preventDefault()
+            let validForm = false
             if(buttonId === "save-edit"){
-                console.log("Save modification to db !")
-                editUserFormService.firstNameH1.textContent = editUserFormService.firstNameInput.value
+                const newFirstName = editUserFormService.firstNameInput.value
+                const newLastName = editUserFormService.lastNameInput.value
+                if( editUserFormService.checkInput('firstName', newFirstName) 
+                || editUserFormService.checkInput('lastName', newLastName) ) {
+                    dispatch(consultApiAction.fetchOrUpdateDataApi(
+                        userService.routes.profilApi, 
+                        userService.getAxiosMethod('update'),
+                        userService.getAxiosParams('update', newFirstName, newLastName),
+                        userService.getAxiosConfig(login.token)
+                    ))
+                    dispatch(storageServiceAction.saveItem('userFirstName', newFirstName))
+                    editUserFormService.firstNameH1.textContent = newFirstName
+                    validForm = true
+                }
             } else if(buttonId === "cancel-edit"){
                 editUserFormService.firstNameInput.value = firstName
                 editUserFormService.lastNameInput.value = lastName
+                validForm = true
             }
-            editUserFormService.editUserForm.style.display = "none"
-            editUserFormService.firstNameH1.style.display = "block"
+            editUserFormService.displayForm(!validForm)
+        },
+
+        checkInput: function(inputName, inputValue){
+            const oldName = inputName === 'firstName' ? firstName : lastName
+            if(inputValue === oldName){ return false }
+            if(userService.checkName(inputValue)){ return true }
+            editUserFormService.errorDisplay(
+                `Your ${inputName} must not contain any special characters 
+                and its length must be between 2 and 20 characters.`
+            ) 
+            return false
         }
         
     }
@@ -133,11 +169,16 @@ function Profil(){
     const getEditFormButton = (text) => {
         const id = text.toLowerCase() + "-edit"
         return(
-            <EditFormButton id={id} onClick={ (e) => { editUserFormService.submit(e, id) } }>{text}</EditFormButton>
+            <EditFormButton 
+                id={id} 
+                onClick={ (e) => { editUserFormService.submit(e, id) } }
+            >{text}</EditFormButton>
         )
     }
 
-    if(login.status !== "loggedin"){ navigate("/login") }
+    useEffect(() => {
+        if(login.status !== "loggedin"){ navigate(userService.routes.loginPage) }
+    }, [login.status, navigate])
 
     return(
         <MainFlex $bgColor={backgroundColorDark}>

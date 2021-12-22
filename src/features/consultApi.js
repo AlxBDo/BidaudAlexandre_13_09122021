@@ -2,7 +2,6 @@ import { selectConsultApi } from "../utils/selectors";
 import { createSlice } from '@reduxjs/toolkit'
 
 const axios = require('axios').default;
-
 axios.defaults.baseURL = 'http://localhost:3001/api/v1/'
 
 const getAxiosPostRequest = (route, bodyParams, config = null) => {
@@ -36,6 +35,7 @@ export function fetchOrUpdateDataApi(route, method, requestParams, config = null
         ? await getAxiosPostRequest(route, requestParams, config) 
         : await getAxiosPutRequest(route, requestParams, config) 
       dispatch(actions.resolved(apiResponse.data))
+      return Promise.resolve(apiResponse.data)
     } catch (error) {
       dispatch(actions.rejected(error.message))
     }

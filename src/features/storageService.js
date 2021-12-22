@@ -1,6 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit'
 
-
 const crypto = require('crypto-js');
 
 const initialState = {

@@ -2,10 +2,10 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import { useDispatch, useSelector } from 'react-redux'
-
 import { selectLogin } from '../utils/selectors'
 import * as loginAction from '../features/login'
 import {MainFlex, backgroundColorDark} from "../utils/style"
+import { userService } from '../services/userService'
 
 
 const ErrorMessageContainer = styled.div`
@@ -72,11 +72,7 @@ function Login(){
     const login = useSelector(selectLogin())
 
     useEffect(() =>{
-        if(login.status === "loggedin"){
-            window.setTimeout(() => { 
-                navigate('/profil')
-            }, 2000)
-        }
+        if(login.status === "loggedin"){ navigate(userService.routes.profilPage) }
     }, [login, navigate, dispatch])
 
     function submitLoginForm(e){
@@ -111,7 +107,7 @@ function Login(){
                 {login.status === "pending" ? (<div>Connexion en cours...</div>) : login.status === "loggedin" ? (
                     <div>
                         Connexion réussie ! 
-                        <p>Vous allez être redirigé vers la page profil dans 2 minutes.</p>
+                        <p>Vous allez être redirigé vers la page profil dans quelques instants.</p>
                     </div>
                 ) : (
                     <form onSubmit={submitLoginForm}>

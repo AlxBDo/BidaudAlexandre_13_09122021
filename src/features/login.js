@@ -3,6 +3,7 @@ import { createSlice } from '@reduxjs/toolkit'
 
 import * as consultApiAction from '../features/consultApi'
 import * as storageServiceAction from '../features/storageService'
+import { userService } from "../services/userService";
 
 const initialState = {
     status: 'start',
@@ -21,7 +22,46 @@ export function authenticate(userEmail, userPassword, rememberUser = false) {
     dispatch(actions.fetching(rememberUser))
     dispatch(storageServiceAction.saveItem('userEmail', userEmail))
     dispatch(storageServiceAction.saveItem('userPassword', userPassword))
-    dispatch(fetchApiToken(userEmail, userPassword))
+    const apiResponse = dispatch(fetchApiToken(userEmail, userPassword))
+    if(apiResponse){
+      apiResponse.then( (value) => {
+        if(value.status === 200){ return value.body.token
+        } else { 
+          dispatch(actions.loggedout())
+          dispatch(actions.error(value.message)) 
+        }
+      }).then( (token) => {
+        if(token.length > 20){
+          dispatch(storageServiceAction.saveItem('token', token, true))
+          dispatch(storageServiceAction.saveItem('rememberUser', rememberUser, false, false))
+          dispatch(actions.authentication(token, rememberUser))
+          const userInfos = dispatch(fetchApiUser(token))
+          if(userInfos){
+            userInfos.then( (value) => {
+              if(value.status === 200){ return value.body
+              } else { 
+                dispatch(actions.loggedout())
+                dispatch(actions.error(value.message)) 
+              }
+            }).then( (data) => {
+              if(
+                userService.checkEmail(data.email) 
+                && userService.checkName(data.firstName) 
+                && userService.checkName(data.lastName)
+              ){
+                dispatch(storageServiceAction.saveItem("userFirstName", data.firstName))
+                dispatch(storageServiceAction.saveItem("userLastName", data.lastName))
+                dispatch(storageServiceAction.saveItem("userId", data.id))
+                dispatch(actions.loggedin())
+              } else {
+                dispatch(actions.error("Failed to retrieve user data !"))
+                dispatch(actions.loggedout())
+              }
+            })
+          }
+        }
+      })
+    }
   }
 }
 
@@ -33,39 +73,9 @@ export function endLogin(){
   }
 }
 
-export function validAuthentication(data, rememberUser){
-  return async (dispatch) => {
-    dispatch(consultApiAction.clear())
-    if(data.body.token.length > 10 && data.status === 200){
-      dispatch(storageServiceAction.saveItem('token', data.body.token, true))
-      dispatch(storageServiceAction.saveItem('rememberUser', rememberUser, false, false))
-      dispatch(actions.authentication(data.body.token, rememberUser))
-      dispatch(fetchApiUser(data.body.token))
-    } else {
-      dispatch(actions.loggedout())
-      console.error(`Wrong Token : ${data.body.token}`, data.message)
-    }
-  }
-}
-
-export function validUser(data){
-  return async (dispatch) => {
-    if(data.status === 200 && data.body.firstName && data.body.lastName && data.body.id){
-      dispatch(storageServiceAction.saveItem("userFirstName", data.body.firstName))
-      dispatch(storageServiceAction.saveItem("userLastName", data.body.lastName))
-      dispatch(storageServiceAction.saveItem("userId", data.body.id))
-      dispatch(actions.loggedin())
-    } else {
-      dispatch(actions.loggedout())
-      console.error("Failed to retrieve user data !", data.message)
-    }
-    dispatch(consultApiAction.clear())
-  }
-}
-
 function fetchApiToken(userEmail, userPassword){
   return async (dispatch) => {
-    dispatch(
+    return await dispatch(
       consultApiAction.fetchOrUpdateDataApi('user/login', "POST", {
         'email': userEmail,
         'password': userPassword 
@@ -78,7 +88,7 @@ function fetchApiUser(token){
     const config = {
       headers: { Authorization: `Bearer ${token}` }
     };
-    dispatch( consultApiAction.fetchOrUpdateDataApi(
+    return await dispatch( consultApiAction.fetchOrUpdateDataApi(
       'user/profile', 
       "POST", 
       { 'token': token }, config) 
@@ -90,15 +100,16 @@ export function startLogin(){
     return async (dispatch, getState) => {
       let token = storageServiceAction.getItem('token', true)
       let rememberUser = storageServiceAction.getItem('rememberUser', false)
-      if(token){ dispatch(actions.loggedin(token, rememberUser))
+      if(token){ 
+        dispatch(actions.authentication(dispatch(token), dispatch(rememberUser)))
+        dispatch(actions.loggedin())
       } else if(rememberUser){
         const login = selectLogin()
         const status = login(getState()).status
         if (status === 'pending') {
           return
         }
-        dispatch(actions.fetching(true))
-        dispatch(fetchApiToken(storageServiceAction.getItem('userEmail'), storageServiceAction.getItem('userPassword')))
+        dispatch(authenticate(storageServiceAction.getItem('userEmail'), storageServiceAction.getItem('userPassword'), true))
       } else { dispatch(actions.loggedout()) }
       return
     }
