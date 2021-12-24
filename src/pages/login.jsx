@@ -6,7 +6,8 @@ import { selectLogin } from '../utils/selectors'
 import * as loginAction from '../features/login'
 import {MainFlex, backgroundColorDark} from "../utils/style"
 import { userService } from '../services/userService'
-
+import { FormValidationService } from '../services/formValidationService'
+import { InputValidationMessageBox } from '../utils/style'
 
 const ErrorMessageContainer = styled.div`
     color: white;
@@ -21,11 +22,6 @@ const InputRemember = styled.div`
 
 const InputRememberLabel = styled.label`
     margin-left: 0.25rem;
-`
-
-const InputValidationMessageBox = styled.p`
-    color: red;
-    font-weight: bold
 `
 
 const InputWrapper = styled.div`
@@ -71,33 +67,49 @@ function Login(){
     const navigate = useNavigate()
     const login = useSelector(selectLogin())
 
+    /**
+     * Controls the inputs of login form and display their format errors
+    */
+    const loginFormValidation = {
+    
+        username: null, 
+    
+        password: null, 
+    
+        rememberMe: false,
+    
+        checkUserName: () => FormValidationService.checkInput(loginFormValidation.username, 'email', 'Your username'),
+    
+        checkUserPassword: () => FormValidationService.checkInput(loginFormValidation.password, 'password', 'Your password'),
+    
+        init: () => {
+            loginFormValidation.username = document.getElementById("username")
+            loginFormValidation.password = document.getElementById("password")
+            loginFormValidation.rememberMe = document.getElementById("remember-me")
+        },
+    
+        onChange: (e) => e.target.getAttribute('id') === 'username' 
+        ? loginFormValidation.checkUserName() : loginFormValidation.checkUserPassword() ,
+    
+        submit: (e) => {
+            e.preventDefault()
+            if(!loginFormValidation.checkUserName() || !loginFormValidation.checkUserPassword()
+            ){ return false }
+            dispatch(
+                loginAction.authenticate(
+                    document.getElementById("username").value, 
+                    document.getElementById("password").value,
+                    document.getElementById("remember-me").checked
+                )
+            )
+            return true
+        }
+    }
+
     useEffect(() =>{
         if(login.status === "loggedin"){ navigate(userService.routes.profilPage) }
-    }, [login, navigate, dispatch])
-
-    function submitLoginForm(e){
-        e.preventDefault()
-        const username = document.getElementById("username")
-        if(!username.value){
-            username.focus()
-            document.getElementById('validation-username').innerHTML = "USERNAME IS REQUIRIED !"
-            return false
-        }
-        const password = document.getElementById("password")
-        if(!password.value){
-            password.focus()
-            document.getElementById('validation-password').innerHTML = "PASSWORD IS REQUIRIED !"
-            return false
-        }
-        dispatch(
-            loginAction.authenticate(
-                document.getElementById("username").value, 
-                document.getElementById("password").value,
-                document.getElementById("remember-me").checked
-            )
-        )
-        return true
-    }
+        loginFormValidation.init() 
+    })
 
     return(
         <MainFlex className="main bg-dark" $bgColor={backgroundColorDark}>
@@ -110,16 +122,26 @@ function Login(){
                         <p>Vous allez être redirigé vers la page profil dans quelques instants.</p>
                     </div>
                 ) : (
-                    <form onSubmit={submitLoginForm}>
+                    <form onSubmit={loginFormValidation.submit}>
                         <InputWrapper>
                             <InputWrapperLabel htmlFor="username">Username</InputWrapperLabel>
-                            <InputWrapperInput type="text" id="username" />
-                            <InputValidationMessageBox id="validation-username"></InputValidationMessageBox>
+                            <InputWrapperInput 
+                                type="text" 
+                                id="username" 
+                                onChange={loginFormValidation.onChange} 
+                                required
+                            />
+                            <InputValidationMessageBox id="username-validation"></InputValidationMessageBox>
                         </InputWrapper>
                         <InputWrapper>
                             <InputWrapperLabel htmlFor="password">Password</InputWrapperLabel>
-                            <InputWrapperInput type="password" id="password" />
-                            <InputValidationMessageBox id="validation-password"></InputValidationMessageBox>
+                            <InputWrapperInput 
+                                type="password" 
+                                id="password" 
+                                onChange={loginFormValidation.onChange} 
+                                required 
+                            />
+                            <InputValidationMessageBox id="password-validation"></InputValidationMessageBox>
                         </InputWrapper>
                         <InputRemember>
                             <input type="checkbox" id="remember-me" />

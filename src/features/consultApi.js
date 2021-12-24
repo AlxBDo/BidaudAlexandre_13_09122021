@@ -38,8 +38,8 @@ export function fetchOrUpdateDataApi(route, method, requestParams, config = null
       return Promise.resolve(apiResponse.data)
     } catch (error) {
       dispatch(actions.rejected(error.message))
+      return Promise.resolve(error)
     }
-    return
   }
 }
   

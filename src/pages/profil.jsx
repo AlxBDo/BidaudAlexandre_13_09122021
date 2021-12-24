@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import { useSelector, useDispatch } from 'react-redux'
 import { selectLogin } from '../utils/selectors'
-import {MainFlex, backgroundColorDark} from "../utils/style"
+import {MainFlex, backgroundColorDark, InputValidationMessageBox } from "../utils/style"
 import * as consultApiAction from '../features/consultApi'
 import * as storageServiceAction from '../features/storageService'
 import { userService } from "../services/userService"
+import { FormValidationService } from '../services/formValidationService'
 
 const AccountAmount = styled.p`
     margin: 0;
@@ -96,6 +97,9 @@ function Profil(){
     const firstName = dispatch(storageServiceAction.getItem('userFirstName'))
     const lastName = dispatch(storageServiceAction.getItem("userLastName"))
  
+    /**
+     * Controls the inputs of profil form and display their format errors
+    */
     const editUserFormService = {
     
         editUserForm: null,
@@ -122,23 +126,21 @@ function Profil(){
             editUserFormService.firstNameH1.style.display = displayItem.h1
         },
 
-        errorDisplay: function(message){
-            // TODO user message display
-            console.error('EDIT USER FORM ERROR : ', message)
-        },
+        onChange: (e) => editUserFormService.checkInput(
+            e.target.getAttribute('id') === 'firstname-ipt' ? 'first name' : 'last name', e.target
+        ),
     
         submit: function(e, buttonId){
             e.preventDefault()
             let validForm = false
             if(buttonId === "save-edit"){
-                const newFirstName = editUserFormService.firstNameInput.value
-                const newLastName = editUserFormService.lastNameInput.value
-                if( editUserFormService.checkInput('firstName', newFirstName) 
-                || editUserFormService.checkInput('lastName', newLastName) ) {
+                if( editUserFormService.checkInput('first name', editUserFormService.firstNameInput) 
+                || editUserFormService.checkInput('last name', editUserFormService.firstNameInput) ) {
+                    const newFirstName = editUserFormService.firstNameInput.value
                     dispatch(consultApiAction.fetchOrUpdateDataApi(
                         userService.routes.profilApi, 
                         userService.getAxiosMethod('update'),
-                        userService.getAxiosParams('update', newFirstName, newLastName),
+                        userService.getAxiosParams('update', newFirstName, editUserFormService.lastNameInput.value),
                         userService.getAxiosConfig(login.token)
                     ))
                     dispatch(storageServiceAction.saveItem('userFirstName', newFirstName))
@@ -153,19 +155,18 @@ function Profil(){
             editUserFormService.displayForm(!validForm)
         },
 
-        checkInput: function(inputName, inputValue){
-            const oldName = inputName === 'firstName' ? firstName : lastName
-            if(inputValue === oldName){ return false }
-            if(userService.checkName(inputValue)){ return true }
-            editUserFormService.errorDisplay(
-                `Your ${inputName} must not contain any special characters 
-                and its length must be between 2 and 20 characters.`
-            ) 
-            return false
+        checkInput: function(inputName, input){
+            if( input.value === (inputName === 'first name' ? firstName : lastName) ){ return false }
+            return FormValidationService.checkInput(input, 'name', inputName)
         }
         
     }
 
+    /**
+     * Provides the cancel and save buttons
+     * @param {string} text : "cancel" or "save" 
+     * @returns {object} EditFormButton
+     */
     const getEditFormButton = (text) => {
         const id = text.toLowerCase() + "-edit"
         return(
@@ -188,16 +189,20 @@ function Profil(){
                     <EditUserNameInput 
                         type="text"
                         id="firstname-ipt" 
-                        defaultValue={firstName}
+                        defaultValue={firstName} 
+                        onChange={ editUserFormService.onChange }
                     /> 
                     <EditUserNameInput 
                         type="text"
                         id="lastname-ipt" 
                         defaultValue={lastName}
+                        onChange={ editUserFormService.onChange }
                     />
                     <div>
                         {getEditFormButton("Save")} {getEditFormButton("Cancel")}
                     </div>
+                    <InputValidationMessageBox id="firstname-ipt-validation"></InputValidationMessageBox>
+                    <InputValidationMessageBox id="lastname-ipt-validation"></InputValidationMessageBox>
                 </EditUserNameForm>
                 <EditButton onClick={editUserFormService.display}>Edit Name</EditButton>
             </HeaderMain>

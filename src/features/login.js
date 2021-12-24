@@ -3,6 +3,7 @@ import { createSlice } from '@reduxjs/toolkit'
 
 import * as consultApiAction from '../features/consultApi'
 import * as storageServiceAction from '../features/storageService'
+import * as userAction from '../features/user'
 import { userService } from "../services/userService";
 
 const initialState = {
@@ -10,8 +11,14 @@ const initialState = {
     error: null,
     token: null,
     rememberUser: false
-  }
+}
 
+/**
+ * provides the user credentials to the API in order to logged him
+ * @param {string} userEmail 
+ * @param {string} userPassword 
+ * @param {boolean} rememberUser 
+ */
 export function authenticate(userEmail, userPassword, rememberUser = false) {
   return async (dispatch, getState) => {
     const login = selectLogin()
@@ -20,55 +27,35 @@ export function authenticate(userEmail, userPassword, rememberUser = false) {
       return
     }
     dispatch(actions.fetching(rememberUser))
-    dispatch(storageServiceAction.saveItem('userEmail', userEmail))
-    dispatch(storageServiceAction.saveItem('userPassword', userPassword))
     const apiResponse = dispatch(fetchApiToken(userEmail, userPassword))
-    if(apiResponse){
-      apiResponse.then( (value) => {
-        if(value.status === 200){ return value.body.token
-        } else { 
-          dispatch(actions.loggedout())
-          dispatch(actions.error(value.message)) 
-        }
-      }).then( (token) => {
-        if(token.length > 20){
-          dispatch(storageServiceAction.saveItem('token', token, true))
-          dispatch(storageServiceAction.saveItem('rememberUser', rememberUser, false, false))
-          dispatch(actions.authentication(token, rememberUser))
-          const userInfos = dispatch(fetchApiUser(token))
-          if(userInfos){
-            userInfos.then( (value) => {
-              if(value.status === 200){ return value.body
-              } else { 
-                dispatch(actions.loggedout())
-                dispatch(actions.error(value.message)) 
-              }
-            }).then( (data) => {
-              if(
-                userService.checkEmail(data.email) 
-                && userService.checkName(data.firstName) 
-                && userService.checkName(data.lastName)
-              ){
-                dispatch(storageServiceAction.saveItem("userFirstName", data.firstName))
-                dispatch(storageServiceAction.saveItem("userLastName", data.lastName))
-                dispatch(storageServiceAction.saveItem("userId", data.id))
-                dispatch(actions.loggedin())
-              } else {
-                dispatch(actions.error("Failed to retrieve user data !"))
-                dispatch(actions.loggedout())
-              }
-            })
-          }
-        }
-      })
-    }
+    return apiResponse.then( (value) => {
+      if(value.status === 200){ return value.body.token
+      } else { 
+        dispatch(actions.loggedout())
+        dispatch(actions.error(value.message)) 
+        return false
+      }
+    }).then( (token) => {
+      if(token.length > 20){
+        dispatch(storageServiceAction.saveItem('token', token, true))
+        dispatch(storageServiceAction.saveItem('rememberUser', rememberUser, false, false))
+        dispatch(actions.authentication(token, rememberUser))
+        dispatch(userAction.authenticate(userEmail, userPassword, token)).then( (value) => {
+          return value ? dispatch(actions.loggedin()) : dispatch(actions.loggedout())
+        })
+      }
+    })
   }
 }
 
+/**
+ * stop the login service
+ */
 export function endLogin(){
   return async (dispatch, getState) => {
     const login = selectLogin()
     dispatch(storageServiceAction.close(!login(getState()).rememberUser))
+    dispatch(userAction.clear())
     dispatch(actions.loggedout())
   }
 }
@@ -76,26 +63,17 @@ export function endLogin(){
 function fetchApiToken(userEmail, userPassword){
   return async (dispatch) => {
     return await dispatch(
-      consultApiAction.fetchOrUpdateDataApi('user/login', "POST", {
-        'email': userEmail,
-        'password': userPassword 
-    }))
+      consultApiAction.fetchOrUpdateDataApi(
+        userService.routes.loginApi, 
+        userService.getAxiosMethod(), 
+        userService.getAxiosParams('login', userEmail, userPassword)
+      ))
   }
 }
 
-function fetchApiUser(token){
-  return async (dispatch) => {
-    const config = {
-      headers: { Authorization: `Bearer ${token}` }
-    };
-    return await dispatch( consultApiAction.fetchOrUpdateDataApi(
-      'user/profile', 
-      "POST", 
-      { 'token': token }, config) 
-    )
-  }
-}
-
+/**
+ * checks the presence of a token or remerberMe in localStorage to log the user 
+ */
 export function startLogin(){
     return async (dispatch, getState) => {
       let token = storageServiceAction.getItem('token', true)
@@ -109,12 +87,21 @@ export function startLogin(){
         if (status === 'pending') {
           return
         }
-        dispatch(authenticate(storageServiceAction.getItem('userEmail'), storageServiceAction.getItem('userPassword'), true))
+        dispatch(
+          authenticate(
+            dispatch(storageServiceAction.getItem('userEmail')), 
+            dispatch(storageServiceAction.getItem('userPassword')), 
+            true
+        ))
       } else { dispatch(actions.loggedout()) }
       return
     }
 }
-  
+
+/**
+ * @name login
+ * @description redux component providing the login service to the user
+ */
 const { actions, reducer } = createSlice({
   name: 'login',
   initialState,
@@ -161,7 +148,8 @@ const { actions, reducer } = createSlice({
     loggedout: (draft) => {
       draft.status = 'loggedout'
       draft.token = null
-      draft.error = null
+      draft.error = null 
+      draft.rememberUser = false
       return
     },
     start: (draft) => {

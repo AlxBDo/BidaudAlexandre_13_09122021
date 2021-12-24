@@ -1,0 +1,33 @@
+<mxfile host="65bd71144e">
+    <diagram id="ux8EO7gfxUK4QehuEjYd" name="Page-1">
+        <mxGraphModel dx="753" dy="447" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="5" value="&lt;p style=&quot;line-height: 120%&quot;&gt;&lt;font color=&quot;#99ff99&quot; size=&quot;1&quot;&gt;&lt;b style=&quot;font-size: 14px&quot;&gt;Header&lt;/b&gt;&lt;/font&gt;&lt;/p&gt;&lt;div style=&quot;text-align: justify&quot;&gt;&lt;/div&gt;&lt;p&gt;&lt;/p&gt;" style="whiteSpace=wrap;html=1;dashed=1;strokeColor=#99FF99;strokeWidth=2;imageAspect=1;align=left;verticalAlign=top;spacingTop=1;spacingLeft=10;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="120" width="590" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;" edge="1" parent="1" source="2" target="8">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="20" y="45"/>
+                            <mxPoint x="20" y="185"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="2" value="login" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1ba1e2;strokeColor=#006EAF;fontColor=#ffffff;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="30" width="110" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="StorageService" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1ba1e2;strokeColor=#006EAF;fontColor=#ffffff;" vertex="1" parent="1">
+                    <mxGeometry x="200" y="30" width="110" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="consultApi" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1ba1e2;strokeColor=#006EAF;fontColor=#ffffff;" vertex="1" parent="1">
+                    <mxGeometry x="358.5" y="30" width="110" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="startLogin" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;strokeWidth=1;verticalAlign=top;strokeColor=#CCCCCC;" vertex="1" parent="1">
+                    <mxGeometry x="60" y="170" width="120" height="30" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
