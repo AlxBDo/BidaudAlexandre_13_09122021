@@ -2,11 +2,6 @@ import { createSlice } from '@reduxjs/toolkit'
 
 const crypto = require('crypto-js');
 
-const initialState = {
-    status: 'off',
-    error: false
-}
-
 function getKeyOrIv(keyOrIv){
     let key = localStorage.getItem(keyOrIv)
     if(!key){
@@ -47,39 +42,36 @@ function encryptItem(item){
     return cryptText
 }
 
-
 export function getItem(itemName, fromSessionStorage = false, decrypt = true){
     const item = fromSessionStorage ? sessionStorage.getItem(itemName) : localStorage.getItem(itemName)
-    if(item){
-        return (dispatch) => {
-            dispatch(actions.start())
-            return decrypt ? decryptItem(item) : item
-        }
-    }
+    if(item){ return decrypt ? decryptItem(item) : item }
     return false
 }
 
-export function saveItem(name, item, saveToSession = false, crypt = true){
-    return async (dispatch) => {
-        if(['number', 'string', 'boolean', 'bigint', 'symbol'].includes(typeof item)){
-            saveToStorage(
-                name, 
-                crypt ? encryptItem(item) : item, 
-                saveToSession
-            )
-            dispatch(actions.start())
-            return true
-        } else { 
-            dispatch(
-                actions.error('the element could not be saved because its type is not accepted : '+ typeof item)
-             )
-        }
-        return false
+export function save(...objectToSave){
+    return async (dispatch) => { 
+        objectToSave.forEach(
+            ots => dispatch(saveToStorage(ots.name, ots.crypt ? encryptItem(ots.value) : ots.value, !ots.intoSession ? false : true))
+        )
     }
 }
 
 function saveToStorage(name, item, saveToSession){
-    saveToSession ? sessionStorage.setItem(name, item) : localStorage.setItem(name, item)
+    return (dispatch) => {
+        if(['number', 'string', 'boolean', 'bigint', 'symbol'].includes(typeof item)){
+            saveToSession ? sessionStorage.setItem(name, item) : localStorage.setItem(name, item)
+            return true
+        }  
+        dispatch(
+            actions.error('the element could not be saved because its type is not accepted : '+ typeof item)
+         )
+        return false
+    }
+}
+
+const initialState = {
+    status: 'off',
+    error: false
 }
 
 const { actions, reducer } = createSlice({
@@ -112,5 +104,6 @@ const { actions, reducer } = createSlice({
     }
 })
 
-export const { close } = actions
+export const { close, start } = actions
+
 export default reducer

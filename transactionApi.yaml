@@ -1,0 +1,290 @@
+swagger: "2.0"
+info:
+  description: Contains all available API endpoints to access to transaction
+  version: 1.0.0
+  title: Argent Bank transaction API
+  termsOfService: http://swagger.io/terms/
+host: localhost:3001
+basePath: /api/v1
+schemes:
+  - http
+paths:
+  /user/transaction:
+    post:
+      security:
+        - Bearer: []
+      tags:
+        - User Transaction Module
+      summary: User Transaction
+      description: API for fetching a user transaction
+      parameters:
+        - in: header
+          type: string
+          name: Authorization
+          description: Attach Bearer JWT token
+          required: true
+        - in: body
+          name: body
+          description: Transcation Payload
+          required: true
+          schema:
+            $ref: "#/definitions/Transaction"
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: User transaction retrieved successully
+          schema:
+            $ref: "#/definitions/transactionResponse"
+        "400":
+          description: Invalid Fields
+        "500":
+          description: Internal Server Error
+  /user/transaction/futherInformation:
+    delete:
+      security:
+        - Bearer: []
+      tags:
+        - User Transaction Futher Information Module
+      summary: Delete Transaction Futher Information
+      description: API for removing information to user transaction
+      parameters:
+        - in: header
+          type: string
+          name: Authorization
+          description: Attach Bearer JWT token
+          required: true
+        - in: body
+          name: body
+          description: Transcation Payload
+          required: true
+          schema:
+            $ref: "#/definitions/deleteFutherInformation"
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: User transaction information removed successully
+        "400":
+          description: Invalid Fields
+        "500":
+          description: Internal Server Error
+    post:
+      security:
+        - Bearer: []
+      tags:
+        - User Transaction Futher Information Module
+      summary: Add Transaction Futher Information
+      description: API for adding information to user transaction
+      parameters:
+        - in: header
+          type: string
+          name: Authorization
+          description: Attach Bearer JWT token
+          required: true
+        - in: body
+          name: body
+          description: Transaction Payload
+          required: true
+          schema:
+            $ref: "#/definitions/editFutherInformation"
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: User transaction information added successully
+        "400":
+          description: Invalid Fields
+        "500":
+          description: Internal Server Error
+    put:
+      security:
+        - Bearer: []
+      tags:
+        - User Transaction Futher Information Module
+      summary: Update Transaction Futher Information
+      description: API for updating information to user transaction
+      parameters:
+        - in: header
+          type: string
+          name: Authorization
+          description: Attach Bearer JWT token
+          required: true
+        - in: body
+          name: body
+          description: Transcation Payload
+          required: true
+          schema:
+            $ref: "#/definitions/editFutherInformation"
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: User transaction information updated successully
+        "400":
+          description: Invalid Fields
+        "500":
+          description: Internal Server Error
+  /user/transactions:
+    post:
+      security:
+        - Bearer: []
+      tags:
+        - User Transactions Module
+      summary: User's current month transactions
+      description: API for fetching the transactions carried out during the current month by the user
+      parameters:
+        - in: header
+          type: string
+          name: Authorization
+          description: Attach Bearer JWT token
+          required: true
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: User transactions retrieved successully
+          schema:
+            $ref: "#/definitions/transactionsResponse"
+        "400":
+          description: Invalid Fields
+        "500":
+          description: Internal Server Error
+  /user/transactions/summary:
+    post:
+      security:
+        - Bearer: []
+      tags:
+        - User Transactions Module
+      summary: User Summary Transaction Informations
+      description: API for fetching user summary transaction
+      parameters:
+        - in: header
+          type: string
+          name: Authorization
+          description: Attach Bearer JWT token
+          required: true
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: User transactions summary retrieved successully
+          schema:
+            $ref: "#/definitions/summaryResponse"
+        "400":
+          description: Invalid Fields
+        "500":
+          description: Internal Server Error
+securityDefinitions:
+  Bearer:
+    type: apiKey
+    name: Authorization
+    in: header
+definitions:
+  deleteFutherInformation:
+    properties:
+      transactionId:
+        type: string
+        description: user transaction id
+      informationType:
+        type: array
+        description: list of information to delete
+        example: ["type", "note"]
+  editFutherInformation:
+    properties:
+      transactionId:
+        type: string
+        description: transaction id
+      type:
+        type: string
+        description: transaction type
+      category:
+        type: string
+        description: transaction category
+      note:
+        type: string
+        description: optional additional information
+  Transaction:
+    properties:
+      id:
+        type: string
+        description: user transaction id
+  futherInformationResponse:
+    type: object
+    properties:
+      transactionId:
+        type: string
+        description: transaction id
+      type:
+        type: string
+        description: transaction type
+      category:
+        type: string
+        description: transaction category
+      note:
+        type: string
+        description: optional additional information
+  summaryResponse:
+    type: object
+    properties:
+      status:
+        type: integer
+      message:
+        type: string
+      body:
+        properties:
+          checkings:
+            type: number
+          savings:
+            type: number
+          card:
+            type: number
+  transactionResponse:
+    type: object
+    properties:
+      amount:
+        type: number
+        description: transaction amount
+      date:
+        type: string
+        description: transaction date
+      description:
+        type: string
+        description: transaction description
+      furtherInformation:
+        type: object
+        description: object containing the type, category and note of the transaction
+        example:
+          {
+            transactionId: string,
+            type: string,
+            category: string,
+            note: string,
+          }
+      id:
+        type: string
+        description: transaction id
+    example:
+      {
+        amount: number,
+        date: string,
+        description: string,
+        furtherInformation: object,
+        id: string,
+      }
+  transactionsResponse:
+    type: array
+    items:
+      type: object
+    example:
+      [
+        {
+          amount: number,
+          date: string,
+          description: string,
+          furtherInformation: object,
+          id: string,
+        },
+        ...,
+      ]
+    description: current month transactions

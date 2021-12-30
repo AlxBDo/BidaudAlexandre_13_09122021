@@ -1,4 +1,3 @@
-import { selectLogin } from "../utils/selectors";
 import { createSlice } from '@reduxjs/toolkit'
 
 import * as consultApiAction from '../features/consultApi'
@@ -7,13 +6,7 @@ import { userService } from "../services/userService";
 
 export const authenticate = (email, password, token) => {
     if(userService.checkEmail(email) && userService.checkPassword(password)){
-        return (dispatch) => {
-            dispatch(actions.authenticated(email, password))
-            // get user information from localStorage, if it exists
-            if(localStorage.getItem('userEmail')){ return userMemory() }
-            // otherwise save the information received as a parameter and recover the missing ones from the API
-            dispatch(storageServiceAction.saveItem('userEmail', email))
-            dispatch(storageServiceAction.saveItem('userPassword', password))
+        return async (dispatch) => {
             const personalInfos = dispatch(fetchPersonalInformations(token))
             if(personalInfos){
                 return personalInfos.then( (value) => {
@@ -24,11 +17,7 @@ export const authenticate = (email, password, token) => {
                   }
                 }).then( (data) => {
                     if( userService.checkName(data.firstName) && userService.checkName(data.lastName) ){
-                        dispatch(storageServiceAction.saveItem("userFirstName", data.firstName))
-                        dispatch(storageServiceAction.saveItem("userLastName", data.lastName))
-                        dispatch(storageServiceAction.saveItem("userId", data.id))
-                        dispatch(actions.identify(data.firstName, data.id, data.lastName))
-                        return true
+                        return dispatch(saveUser(email, data.firstName, data.id, data.lastName, password, true))
                     } else {
                         dispatch(actions.clear())
                         dispatch(actions.error("Failed to retrieve user data !"))
@@ -51,14 +40,60 @@ function fetchPersonalInformations(token){
     }
 }
 
-function userMemory(){
+export const updateUserInformation = (firstName, lastName, token) => {
     return (dispatch) => {
-        dispatch(actions.identify(
-            dispatch(storageServiceAction.getItem('userFirstName')), 
-            dispatch(storageServiceAction.getItem('userId')), 
-            dispatch(storageServiceAction.getItem('userLastName'))
+        dispatch(consultApiAction.fetchOrUpdateDataApi(
+            userService.routes.profilApi, 
+            userService.getAxiosMethod('update'),
+            userService.getAxiosParams('update', firstName, lastName),
+            userService.getAxiosConfig(token)
+        ))
+        dispatch(storageServiceAction.save(
+            {name: 'userFirstName', value: firstName, crypt: true}, 
+            {name: 'userLastName', value: lastName, crypt: true}
+        ))
+        dispatch(actions.update('firstname', firstName))
+        dispatch(actions.update('lastname', lastName))
+    }
+}
+
+export function userMemory(){
+    return (dispatch) => {
+        dispatch( saveUser(
+            storageServiceAction.getItem('userEmail'),
+            storageServiceAction.getItem('userFirstName'), 
+            storageServiceAction.getItem('userId'), 
+            storageServiceAction.getItem('userLastName'), 
+            storageServiceAction.getItem('userPassword')
         ))
         return true
+    }
+}
+
+/**
+ * Save user information to the state and to localStorage if last parameter is true
+ * @param {string} email 
+ * @param {string} firstName 
+ * @param {string} id 
+ * @param {string} lastName 
+ * @param {string} password 
+ * @param {boolean} saveToStorage 
+ * @returns {boolean} true
+ */
+function saveUser(email, firstName, id, lastName, password, saveToStorage = false){
+    return async (dispatch) => {
+        if(saveToStorage){
+            const baseObject = {intoSession: false, crypt: true}
+            dispatch(storageServiceAction.save(
+                {name: "userEmail", value: email, ...baseObject},
+                {name: "userFirstName", value: firstName, ...baseObject},
+                {name: "userId", value: id, ...baseObject},
+                {name: "userLastName", value: lastName,  ...baseObject},
+                {name: "userPassword", value: password,  ...baseObject},
+            ))
+        }
+        dispatch(actions.identify(email, firstName, id, lastName, password))
+        return true 
     }
 }
 
@@ -77,17 +112,6 @@ const {actions, reducer } = createSlice({
     name: 'user',
     initialState,
     reducers: {
-        authenticated: {
-            prepare: (email, password) => ({
-                payload: { email, password }
-            }),
-            reducer: (draft, action) => {
-                draft.email = action.payload.email
-                draft.password = action.payload.password
-                draft.status = 'authenticated' 
-                return 
-            }
-        },
         clear: (draft) => {
             draft.status = 'void' 
             draft.email = null 
@@ -109,17 +133,28 @@ const {actions, reducer } = createSlice({
             }
         },
         identify: {
-            prepare: (firstname, id, lastname) => ({
-                payload: { firstname, id, lastname }
+            prepare: (email, firstname, id, lastname, password) => ({
+                payload: { email, firstname, id, lastname, password }
             }),
             reducer: (draft, action) => {
+                draft.email = action.payload.email
                 draft.firstname = action.payload.firstname 
                 draft.id = action.payload.id 
                 draft.lastname = action.payload.lastname 
+                draft.password = action.payload.password
                 draft.status = 'identified' 
                 return 
             }
         },
+        update: {
+            prepare: (itemName, item) => ({
+                payload: { itemName, item }
+            }),
+            reducer: (draft, action) => {
+                draft[action.payload.itemName] = action.payload.item
+                return
+            }
+        }
     },
 })
 

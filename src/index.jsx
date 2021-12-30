@@ -11,6 +11,7 @@ import Footer from './components/footer'
 import Home from './pages/home';
 import Login from './pages/login';
 import Profil from './pages/profil';
+import Error from './pages/error'; 
 import store from './utils/store';
 
 const GlobalStyle = createGlobalStyle`
@@ -39,6 +40,7 @@ ReactDOM.render(
           <Route exact path="/" element={<Home />} />
           <Route exact path="/login" element={<Login />} />
           <Route exact path="/profil" element={<Profil />} />
+          <Route path="*" element={<Error />} />
         </Routes>
         <Footer />
       </Router>

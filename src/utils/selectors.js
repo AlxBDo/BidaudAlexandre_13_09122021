@@ -1,10 +1,3 @@
-const voidUser = { status : 'void'}
-
-export const selectUser = (userBearerJWT) => (state) => {
-    return state.user[userBearerJWT] ?? voidUser
-}
-
-
 const voidLogin = { status : 'loggedout'}
 
 export const selectLogin = () => (state) => {
@@ -28,4 +21,10 @@ const voidStrorageService = { status : 'off' }
 
 export const selectStorageService = () => (state) => {
     return state.storageService ?? voidStrorageService
+}
+
+const voidUser = { status : 'void'}
+
+export const selectUser = () => (state) => {
+    return state.user ?? voidUser
 }

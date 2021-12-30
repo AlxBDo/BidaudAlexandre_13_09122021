@@ -1,17 +1,9 @@
-import { selectLogin } from "../utils/selectors";
+import { selectLogin, selectUser } from "../utils/selectors";
 import { createSlice } from '@reduxjs/toolkit'
-
 import * as consultApiAction from '../features/consultApi'
 import * as storageServiceAction from '../features/storageService'
 import * as userAction from '../features/user'
 import { userService } from "../services/userService";
-
-const initialState = {
-    status: 'start',
-    error: null,
-    token: null,
-    rememberUser: false
-}
 
 /**
  * provides the user credentials to the API in order to logged him
@@ -26,25 +18,18 @@ export function authenticate(userEmail, userPassword, rememberUser = false) {
     if (status === 'pending') {
       return
     }
-    dispatch(actions.fetching(rememberUser))
-    const apiResponse = dispatch(fetchApiToken(userEmail, userPassword))
-    return apiResponse.then( (value) => {
-      if(value.status === 200){ return value.body.token
-      } else { 
-        dispatch(actions.loggedout())
-        dispatch(actions.error(value.message)) 
-        return false
-      }
-    }).then( (token) => {
-      if(token.length > 20){
-        dispatch(storageServiceAction.saveItem('token', token, true))
-        dispatch(storageServiceAction.saveItem('rememberUser', rememberUser, false, false))
-        dispatch(actions.authentication(token, rememberUser))
-        dispatch(userAction.authenticate(userEmail, userPassword, token)).then( (value) => {
-          return value ? dispatch(actions.loggedin()) : dispatch(actions.loggedout())
-        })
-      }
-    })
+    dispatch(actions.fetching())
+    const token = await dispatch(fetchApiToken(userEmail, userPassword, rememberUser))
+    if(token){
+      return dispatch(
+        userAction.authenticate(
+          userEmail, 
+          userPassword, 
+          token
+        )).then( (value) => {
+        return value ? dispatch(actions.loggedin(token, rememberUser)) : dispatch(actions.loggedout())
+      })
+    }
   }
 }
 
@@ -52,50 +37,70 @@ export function authenticate(userEmail, userPassword, rememberUser = false) {
  * stop the login service
  */
 export function endLogin(){
-  return async (dispatch, getState) => {
-    const login = selectLogin()
-    dispatch(storageServiceAction.close(!login(getState()).rememberUser))
+  return async (dispatch) => {
+    dispatch(storageServiceAction.close())
     dispatch(userAction.clear())
     dispatch(actions.loggedout())
   }
 }
 
-function fetchApiToken(userEmail, userPassword){
+function fetchApiToken(userEmail, userPassword, rememberUser){
   return async (dispatch) => {
-    return await dispatch(
+    const apiResponse = await dispatch(
       consultApiAction.fetchOrUpdateDataApi(
         userService.routes.loginApi, 
         userService.getAxiosMethod(), 
         userService.getAxiosParams('login', userEmail, userPassword)
       ))
+      if(apiResponse.status === 200){ 
+        const token = apiResponse.body.token
+        if(token.length > 20){
+          dispatch(storageServiceAction.save({name:'rememberUser', value: rememberUser}))
+          dispatch(storageServiceAction.save({name: 'token', value: token, crypt: true, intoSession: true}))
+          return token
+        }
+      } else { 
+        dispatch(actions.loggedout())
+        dispatch(actions.error(apiResponse.message)) 
+      }
+      return false
   }
 }
-
+ 
 /**
  * checks the presence of a token or remerberMe in localStorage to log the user 
  */
 export function startLogin(){
     return async (dispatch, getState) => {
+      dispatch(storageServiceAction.start())
       let token = storageServiceAction.getItem('token', true)
       let rememberUser = storageServiceAction.getItem('rememberUser', false)
       if(token){ 
-        dispatch(actions.authentication(dispatch(token), dispatch(rememberUser)))
-        dispatch(actions.loggedin())
+        dispatch(userAction.userMemory())
+        dispatch(actions.loggedin(token, rememberUser))
       } else if(rememberUser){
         const login = selectLogin()
         const status = login(getState()).status
-        if (status === 'pending') {
-          return
-        }
-        dispatch(
-          authenticate(
-            dispatch(storageServiceAction.getItem('userEmail')), 
-            dispatch(storageServiceAction.getItem('userPassword')), 
-            true
+        if (status === 'loggedin') { return }
+        dispatch(userAction.userMemory())
+        const user = selectUser()
+        const token = dispatch(
+          fetchApiToken(
+            user(getState()).email, 
+            user(getState()).password, 
+            rememberUser
         ))
+        dispatch(actions.loggedin(token, rememberUser))
       } else { dispatch(actions.loggedout()) }
       return
     }
+}
+
+const initialState = {
+    status: 'start',
+    error: null,
+    token: null,
+    rememberUser: false
 }
 
 /**
@@ -116,22 +121,17 @@ const { actions, reducer } = createSlice({
         return
       }
     },
-    fetching: {
-      prepare: (rememberUser) => ({
-        payload: rememberUser,
-      }),
-      reducer: (draft, action) =>{
-        draft.rememberUser = action.payload
-        draft.status = 'pending'
-        return
-      }
+    fetching: (draft) =>{
+      draft.status = 'pending'
+      return
     },
-    authentication: {
+    loggedin: {
       prepare: (token, rememberUser) => ({
         payload: {token, rememberUser}
       }),
       reducer: (draft, action)=>{
         if(action.payload.token.length > 10) {
+          draft.status = 'loggedin'
           draft.token =  action.payload.token
           draft.rememberUser =  action.payload.rememberUser
         } else {
@@ -140,10 +140,6 @@ const { actions, reducer } = createSlice({
         }
         return 
       }
-    },
-    loggedin: (draft) => {
-      draft.status = 'loggedin'
-      return 
     },
     loggedout: (draft) => {
       draft.status = 'loggedout'
@@ -159,6 +155,6 @@ const { actions, reducer } = createSlice({
   },
 })
 
-export const {authentication, error, loggedin, loggedout} = actions
+export const {error, loggedin, loggedout} = actions
 
 export default reducer

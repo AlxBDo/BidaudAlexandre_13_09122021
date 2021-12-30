@@ -40,6 +40,24 @@ const InputWrapperLabel = styled.label`
     font-weight: bold;
 `
 
+const LoadingMessage = styled.div`
+    color: #00bc77;
+    font-size: x-large;
+    font-weight: 500;
+    text-align: center;
+    margin: 20% auto 12%;
+`
+
+const LoadingIcon = styled.p`
+    border: 10px solid #00bc77;
+	height: 50px;
+	width: 50px;
+	border-radius: 100px;
+	border-bottom-color: transparent;
+	animation: loading 700ms linear infinite;
+    margin: 15% auto;
+`
+
 const SignInButton = styled.button`
     display: block;
     width: 100%;
@@ -105,7 +123,7 @@ function Login(){
             return true
         }
     }
-
+ 
     useEffect(() =>{
         if(login.status === "loggedin"){ navigate(userService.routes.profilPage) }
         loginFormValidation.init() 
@@ -116,7 +134,12 @@ function Login(){
             <SignInContent>
                 <i className="fa fa-user-circle sign-in-icon"></i>
                 <h1>Sign In</h1>
-                {login.status === "pending" ? (<div>Connexion en cours...</div>) : login.status === "loggedin" ? (
+                {login.status === "pending" ? (
+                <LoadingMessage className="loading-data">
+                    Loading your profile...
+                    <LoadingIcon> </LoadingIcon>
+                </LoadingMessage>
+                ) : login.status === "loggedin" ? (
                     <div>
                         Connexion réussie ! 
                         <p>Vous allez être redirigé vers la page profil dans quelques instants.</p>

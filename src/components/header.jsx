@@ -3,9 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { Link } from "react-router-dom"
 import styled from "styled-components"
 import { useDispatch, useSelector } from 'react-redux'
-import { selectLogin, selectLoginHeaderDisplay, selectConsultApi } from '../utils/selectors'
+import { selectLogin, selectLoginHeaderDisplay, selectUser } from '../utils/selectors'
 import * as loginAction from '../features/login'
-import * as storageServiceAction from '../features/storageService'
 import logoImg from "../assets/argentBankLogo.png"
 
 const HeaderNav = styled.nav`
@@ -36,11 +35,11 @@ const SignBtn = styled.a`
 function Header(){
     const dispatch = useDispatch()
     const login = useSelector(selectLogin())
-    const consultApi = useSelector(selectConsultApi())
+    const user = useSelector(selectUser())
     const location = useLocation()
     const navigate = useNavigate()
     const { loginRoute, loginClassName, loginText } = useSelector(selectLoginHeaderDisplay())
-    const userName = login.status === "loggedin" ? dispatch(storageServiceAction.getItem("userFirstName")) : null
+    const userName = login.status === "loggedin" ? user.firstname : null
     const loginOnclick =  (e) => { 
         e.preventDefault()
         if(login.status !== "loggedout"){ dispatch(loginAction.endLogin()) }
@@ -49,7 +48,7 @@ function Header(){
 
     useEffect(()=>{
         if(login.status === "start" ){ dispatch(loginAction.startLogin()) } 
-    }, [login, dispatch, consultApi])
+    }, [login, dispatch])
 
     return (
         <header>
@@ -62,11 +61,11 @@ function Header(){
                     {login.status === "loggedin" && (
                         <Link to="/profil">
                             <i className="fa fa-user-circle"></i>
-                            {userName}
-                        </Link>
+                            {userName} 
+                        </Link> 
                     )}
                     <SignBtn onClick={loginOnclick}>
-                        <i className={`fa fa-${loginClassName}`}></i>
+                        <i className={`fa fa-${loginClassName}`}> </i> 
                         {`Sign ${loginText}`}
                     </SignBtn>
                 </div>

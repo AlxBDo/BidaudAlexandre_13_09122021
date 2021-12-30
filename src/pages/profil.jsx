@@ -1,11 +1,11 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
+import styled from 'styled-components' 
 import { useSelector, useDispatch } from 'react-redux'
 import { selectLogin } from '../utils/selectors'
+import { selectUser } from '../utils/selectors'
 import {MainFlex, backgroundColorDark, InputValidationMessageBox } from "../utils/style"
-import * as consultApiAction from '../features/consultApi'
-import * as storageServiceAction from '../features/storageService'
+import * as userAction from '../features/user'
 import { userService } from "../services/userService"
 import { FormValidationService } from '../services/formValidationService'
 
@@ -94,8 +94,7 @@ function Profil(){
     const navigate = useNavigate()
     const dispatch = useDispatch()
     const login = useSelector(selectLogin())
-    const firstName = dispatch(storageServiceAction.getItem('userFirstName'))
-    const lastName = dispatch(storageServiceAction.getItem("userLastName"))
+    const user = useSelector(selectUser())
  
     /**
      * Controls the inputs of profil form and display their format errors
@@ -137,26 +136,24 @@ function Profil(){
                 if( editUserFormService.checkInput('first name', editUserFormService.firstNameInput) 
                 || editUserFormService.checkInput('last name', editUserFormService.firstNameInput) ) {
                     const newFirstName = editUserFormService.firstNameInput.value
-                    dispatch(consultApiAction.fetchOrUpdateDataApi(
-                        userService.routes.profilApi, 
-                        userService.getAxiosMethod('update'),
-                        userService.getAxiosParams('update', newFirstName, editUserFormService.lastNameInput.value),
-                        userService.getAxiosConfig(login.token)
+                    dispatch(userAction.updateUserInformation(
+                        newFirstName, 
+                        editUserFormService.lastNameInput.value,
+                        login.token
                     ))
-                    dispatch(storageServiceAction.saveItem('userFirstName', newFirstName))
                     editUserFormService.firstNameH1.textContent = newFirstName
                     validForm = true
                 }
             } else if(buttonId === "cancel-edit"){
-                editUserFormService.firstNameInput.value = firstName
-                editUserFormService.lastNameInput.value = lastName
+                editUserFormService.firstNameInput.value = user.firstname
+                editUserFormService.lastNameInput.value = user.lastname
                 validForm = true
             }
             editUserFormService.displayForm(!validForm)
         },
 
         checkInput: function(inputName, input){
-            if( input.value === (inputName === 'first name' ? firstName : lastName) ){ return false }
+            if( input.value === (inputName === 'first name' ? user.firstname : user.lastname) ){ return false }
             return FormValidationService.checkInput(input, 'name', inputName)
         }
         
@@ -184,18 +181,18 @@ function Profil(){
     return(
         <MainFlex $bgColor={backgroundColorDark}>
             <HeaderMain>
-                <h1>Welcome back<br /><span id="firstname">{firstName}</span></h1>
+                <h1>Welcome back<br /><span id="firstname">{user.firstname}</span></h1>
                 <EditUserNameForm id="edit-username-form" onSubmit={(e) => { e.preventDefault() }}>
                     <EditUserNameInput 
                         type="text"
                         id="firstname-ipt" 
-                        defaultValue={firstName} 
+                        defaultValue={user.firstname} 
                         onChange={ editUserFormService.onChange }
                     /> 
                     <EditUserNameInput 
                         type="text"
                         id="lastname-ipt" 
-                        defaultValue={lastName}
+                        defaultValue={user.lastname}
                         onChange={ editUserFormService.onChange }
                     />
                     <div>
