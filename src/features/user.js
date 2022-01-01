@@ -1,9 +1,15 @@
 import { createSlice } from '@reduxjs/toolkit'
-
 import * as consultApiAction from '../features/consultApi'
 import * as storageServiceAction from '../features/storageService'
 import { userService } from "../services/userService";
-
+ 
+/**
+ * Authenticate user and try to fetch other user datas
+ * @function
+ * @param {string} email 
+ * @param {string} password 
+ * @param {string} token 
+ */
 export const authenticate = (email, password, token) => {
     if(userService.checkEmail(email) && userService.checkPassword(password)){
         return async (dispatch) => {
@@ -29,6 +35,12 @@ export const authenticate = (email, password, token) => {
     }
 }
 
+/**
+ * Retrieves user data from API (use consultApi component)
+ * @param {string} token 
+ * @returns {object} API response
+ * @see consultApi
+ */
 function fetchPersonalInformations(token){
     return async (dispatch) => {
         return await dispatch( consultApiAction.fetchOrUpdateDataApi(
@@ -40,6 +52,13 @@ function fetchPersonalInformations(token){
     }
 }
 
+/**
+ * Update user first name and last name
+ * @function
+ * @param {string} firstName
+ * @param {string} lastName
+ * @param {string} token
+ */
 export const updateUserInformation = (firstName, lastName, token) => {
     return (dispatch) => {
         dispatch(consultApiAction.fetchOrUpdateDataApi(
@@ -57,6 +76,11 @@ export const updateUserInformation = (firstName, lastName, token) => {
     }
 }
 
+/**
+ * retrieves the user information from localStorage (use storageService component)
+ * @returns {boolean}
+ * @see storageService
+ */
 export function userMemory(){
     return (dispatch) => {
         dispatch( saveUser(
@@ -108,6 +132,10 @@ const initialState = {
     password: null
 }
 
+/**
+ * @name user 
+ * @description store user information 
+ */
 const {actions, reducer } = createSlice({
     name: 'user',
     initialState,
@@ -124,7 +152,7 @@ const {actions, reducer } = createSlice({
         },
         error: {
             prepare: (errorMessage) => ({
-                payload: errorMessage
+                payload: {errorMessage}
             }),
             reducer: (draft, action) => {
                 draft.error = action.payload.errorMessage
@@ -158,6 +186,6 @@ const {actions, reducer } = createSlice({
     },
 })
 
-export const { clear } = actions
+export const { clear, error, identify, update } = actions
 
 export default reducer

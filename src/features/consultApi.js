@@ -1,27 +1,43 @@
 import { selectConsultApi } from "../utils/selectors";
 import { createSlice } from '@reduxjs/toolkit'
-
+ 
 const axios = require('axios').default;
 axios.defaults.baseURL = 'http://localhost:3001/api/v1/'
 
+/**
+ * Provides Axios Post request params 
+ * @param {string} route 
+ * @param {object} bodyParams : { firstname = "Peter" } 
+ * @param {object} config : header params
+ * @returns {object} axios.post()
+ */
 const getAxiosPostRequest = (route, bodyParams, config = null) => {
     return typeof(config) === "object" 
     ? axios.post(route, bodyParams, config) 
     : axios.post(route, bodyParams)
 }
 
+/**
+ * Provides Axios Put request params 
+ * @param {string} route 
+ * @param {object} bodyParams : { firstname = "Peter" } 
+ * @param {object} config : header params
+ * @returns {object} axios.put()
+ */
 const getAxiosPutRequest = (route, bodyParams, config = null) => {
     return typeof(config) === "object" 
     ? axios.put(route, bodyParams, config) 
     : axios.put(route, bodyParams)
 }
 
-const initialState = {
-    status: 'void',
-    data: null,
-    error: null,
-  }
-
+/**
+ * Fetch API data
+ * @param {string} route 
+ * @param {string} method : POST or PUT or GET 
+ * @param {object} requestParams : { lastname : Paul }
+ * @param {object} config : header params 
+ * @returns {object} API response
+ */
 export function fetchOrUpdateDataApi(route, method, requestParams, config = null) {
   return async (dispatch, getState) => {
     const consultApi = selectConsultApi()
@@ -42,7 +58,17 @@ export function fetchOrUpdateDataApi(route, method, requestParams, config = null
     }
   }
 }
-  
+
+const initialState = {
+  status: 'void',
+  data: null,
+  error: null,
+}
+
+/**
+ * Component making API requests
+ * @component
+ */
 const { actions, reducer } = createSlice({
   name: 'consultApi',
   initialState,
@@ -63,23 +89,32 @@ const { actions, reducer } = createSlice({
         }
         return
     },
-    resolved: (draft, action) => {
-      if (draft.status === 'pending' || draft.status === 'updating') {
-        draft.data = action.payload
-        draft.status = 'resolved'
+    resolved: {
+      prepare: (data) => ({
+        payload: data
+      }), 
+      reducer: (draft, action) => {
+        if (draft.status === 'pending' || draft.status === 'updating') {
+          draft.data = action.payload
+          draft.status = 'resolved'
+        }
         return
       }
-      return
     },
-    rejected: (draft, action) => {
-      if (draft.status === 'pending' || draft.status === 'updating') {
-        draft.status = 'rejected'
-        draft.error = action.payload
-        draft.data = null
-        console.error("consultApi - Request is rejected : ", action.payload)
+    rejected: {
+      prepare: (errorMessage) => ({
+        payload: errorMessage
+      }),
+      reducer: (draft, action) => {
+        if (draft.status === 'pending' || draft.status === 'updating') {
+          draft.status = 'rejected'
+          draft.error = action.payload
+          draft.data = null
+          console.error("consultApi - Request is rejected : ", action.payload)
+          return
+        }
         return
       }
-      return
     },
     clear: (draft) => {
       if(draft.status !== 'void'){
@@ -93,6 +128,6 @@ const { actions, reducer } = createSlice({
   },
 })
 
-export const {clear} = actions 
+export const { clear, fetching, rejected, resolved } = actions 
 
 export default reducer

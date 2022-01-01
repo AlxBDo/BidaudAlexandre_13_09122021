@@ -32,6 +32,10 @@ const SignBtn = styled.a`
     }
 `
 
+/**
+ * Display html header
+ * @component
+ */
 function Header(){
     const dispatch = useDispatch()
     const login = useSelector(selectLogin())

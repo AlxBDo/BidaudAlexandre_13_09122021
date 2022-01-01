@@ -1,5 +1,4 @@
 import styled from "styled-components";
-
 import bankTreeImg from "../assets/bank-tree.jpeg";
 import iconChat from "../assets/icon-chat.png"
 import iconMoney from "../assets/icon-money.png"
@@ -79,7 +78,11 @@ const HeroText = styled.p`
         font-size: 1.2rem;
     }
 `
-
+/**
+ * Component displaying home page
+ * @component
+ * @returns {object} main dom element
+ */
 function Home(){
     return(
         <main>

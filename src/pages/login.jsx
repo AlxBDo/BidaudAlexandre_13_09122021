@@ -79,6 +79,11 @@ const SignInContent = styled.section`
     padding: 2rem;
 `
 
+/**
+ * Component displaying login page
+ * @component
+ * @returns {object} MainFlex - <main> styled component
+ */
 function Login(){
 
     const dispatch = useDispatch()

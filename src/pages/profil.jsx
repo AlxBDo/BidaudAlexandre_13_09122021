@@ -90,6 +90,11 @@ const EditUserNameInput = styled.input`
     margin: 10px
 `
 
+/**
+ * Display profile page
+ * @component
+ * @returns {object} MainFlex - <main> styled component
+ */
 function Profil(){
     const navigate = useNavigate()
     const dispatch = useDispatch()

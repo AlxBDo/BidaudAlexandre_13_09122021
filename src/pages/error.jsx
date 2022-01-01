@@ -47,7 +47,7 @@ const StyledMain = styled.main`
 `
 
 /**
- * Component for displaying error message when route does not exist
+ * Component displaying error page if route does not exist
  * @component
  * @returns {object} StyledMain - <main> styled component
  */

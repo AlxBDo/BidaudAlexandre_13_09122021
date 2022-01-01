@@ -4,7 +4,7 @@ import * as consultApiAction from '../features/consultApi'
 import * as storageServiceAction from '../features/storageService'
 import * as userAction from '../features/user'
 import { userService } from "../services/userService";
-
+ 
 /**
  * provides the user credentials to the API in order to logged him
  * @param {string} userEmail 
@@ -44,6 +44,13 @@ export function endLogin(){
   }
 }
 
+/**
+ * Get token from the API
+ * @param {string} userEmail 
+ * @param {string} userPassword 
+ * @param {boolean} rememberUser 
+ * @returns {string} token
+ */
 function fetchApiToken(userEmail, userPassword, rememberUser){
   return async (dispatch) => {
     const apiResponse = await dispatch(
@@ -149,12 +156,14 @@ const { actions, reducer } = createSlice({
       return
     },
     start: (draft) => {
-      if(!localStorage.getItem('rememberUser')){ draft.status = 'loggedout' }
+      if(!localStorage.getItem('rememberUser')){ 
+        draft.status = 'loggedout'
+      }
       return
     },
   },
 })
 
-export const {error, loggedin, loggedout} = actions
+export const {error, fetching, loggedin, loggedout, start} = actions
 
 export default reducer

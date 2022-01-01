@@ -12,6 +12,10 @@ const FooterText = styled.p`
     padding: 0;
 `
 
+/**
+ * Display html footer
+ * @component
+ */
 function Footer(){
     return(
         <FooterPage>
