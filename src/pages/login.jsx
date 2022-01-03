@@ -146,8 +146,8 @@ function Login(){
                 </LoadingMessage>
                 ) : login.status === "loggedin" ? (
                     <div>
-                        Connexion réussie ! 
-                        <p>Vous allez être redirigé vers la page profil dans quelques instants.</p>
+                        Successful login ! 
+                        <p>You will be redirected to the profile page in a few moments.</p>
                     </div>
                 ) : (
                     <form onSubmit={loginFormValidation.submit}>
