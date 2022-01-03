@@ -121,6 +121,10 @@ function saveUser(email, firstName, id, lastName, password, saveToStorage = fals
     }
 }
 
+/**
+ * List of state attributes allowed to be updated
+ */
+const allowedStateAttributes = ['email', 'firstname', 'lastname', 'password']
 
 const initialState = {
     status: 'void',
@@ -179,6 +183,32 @@ const {actions, reducer } = createSlice({
                 payload: { itemName, item }
             }),
             reducer: (draft, action) => {
+                if(!allowedStateAttributes.includes(action.payload.itemName)){
+                    draft.error = `Update failled ! ${action.payload.itemName} isn't an allowed state attribute.`
+                } else {
+                    switch(action.payload.itemName){
+                        case 'email' :
+                            if(userService.checkEmail(action.payload.item)){
+                                break;
+                            }
+                        case 'firstname' : 
+                            if(userService.checkName(action.payload.item)){
+                                break;
+                            }
+                        case 'lastname' : 
+                            if(userService.checkName(action.payload.item)){
+                                break;
+                            }
+                        case 'password' : 
+                            if(userService.checkPassword(action.payload.item)){
+                                break;
+                            }
+                        default : 
+                            draft.error = `Update failled ! ${action.payload.item} isn't an allowed ${action.payload.itemName}`
+                        
+                    }
+                }
+                if(draft.error){ return }
                 draft[action.payload.itemName] = action.payload.item
                 return
             }
