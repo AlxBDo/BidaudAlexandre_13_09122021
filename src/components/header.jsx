@@ -14,6 +14,12 @@ const HeaderNav = styled.nav`
     padding: 5px 20px;
 `
 
+const LoginDiv = styled.div`
+    display: flex; 
+    flex-wrap: wrap; 
+    justify-content: end;
+`
+
 const LogoImg = styled.img`
     max-width: 100%;
     width: 200px;
@@ -61,7 +67,7 @@ function Header(){
                     <LogoImg src={logoImg} alt="Argent Bank Logo" />
                     <h1 className="sr-only">Argent Bank</h1>
                 </LogoLink>
-                <div>
+                <LoginDiv>
                     {login.status === "loggedin" && (
                         <Link to="/profil">
                             <i className="fa fa-user-circle"></i>
@@ -72,7 +78,7 @@ function Header(){
                         <i className={`fa fa-${loginClassName}`}> </i> 
                         {`Sign ${loginText}`}
                     </SignBtn>
-                </div>
+                </LoginDiv>
             </HeaderNav>
         </header>
     )

@@ -42,7 +42,7 @@ export function fetchOrUpdateDataApi(route, method, requestParams, config = null
   return async (dispatch, getState) => {
     const consultApi = selectConsultApi()
     const status = consultApi(getState()).status
-    if (status === 'pending' || status === 'updating') {
+    if (status === 'pending') {
       return
     }
     dispatch(actions.fetching())
@@ -74,19 +74,10 @@ const { actions, reducer } = createSlice({
   initialState,
   reducers: {
     fetching: (draft) => {
-      if (draft.status === 'void') {
-          draft.status = 'pending'
-          return
-        }
         if (draft.status === 'rejected') {
           draft.error = null
-          draft.status = 'pending'
-          return
         }
-        if (draft.status === 'resolved') {
-          draft.status = 'updating'
-          return
-        }
+        draft.status = 'pending'
         return
     },
     resolved: {
@@ -94,7 +85,7 @@ const { actions, reducer } = createSlice({
         payload: data
       }), 
       reducer: (draft, action) => {
-        if (draft.status === 'pending' || draft.status === 'updating') {
+        if (draft.status === 'pending') {
           draft.data = action.payload
           draft.status = 'resolved'
         }
@@ -106,7 +97,7 @@ const { actions, reducer } = createSlice({
         payload: errorMessage
       }),
       reducer: (draft, action) => {
-        if (draft.status === 'pending' || draft.status === 'updating') {
+        if (draft.status === 'pending') {
           draft.status = 'rejected'
           draft.error = action.payload
           draft.data = null

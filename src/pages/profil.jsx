@@ -37,6 +37,9 @@ const AccountsSection = styled.section`
     box-sizing: border-box;
     text-align: left;
     margin-bottom: 2rem;
+    @media (min-width: 720px){
+        flex-direction: row;
+    }
 `
 
 const AccountTitle = styled.h3`
@@ -77,6 +80,9 @@ const TransactionButton = styled.button`
     border-color: #00bc77;
     background-color: #00bc77;
     color: #fff;
+    @media (min-width: 720px){
+        width: 200px;
+    }
 `
 
 const EditUserNameForm = styled.form`

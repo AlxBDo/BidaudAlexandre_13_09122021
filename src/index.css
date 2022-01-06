@@ -4,19 +4,8 @@
 	flex-direction: column;
 }
 
-.sr-only {
-  border: 0 !important;
-  clip: rect(1px, 1px, 1px, 1px) !important; /* 1 */
-  -webkit-clip-path: inset(50%) !important;
-  clip-path: inset(50%) !important; /* 2 */
-  height: 1px !important;
-  margin: -1px !important;
-  overflow: hidden !important;
-  padding: 0 !important;
-  position: absolute !important;
-  width: 1px !important;
-  white-space: nowrap !important; /* 3 */
-}
+
+.fa { margin: 0 3px 0 5px; }
 
 .main-nav a {
   font-weight: bold;
@@ -33,24 +22,27 @@
   font-size: 5rem;
 }
 
-@media (min-width: 720px) {
-  .account {
-    flex-direction: row;
-  }
-
-  .account-content-wrapper.cta {
-    flex: 0;
-  }
-
-  .transaction-button {
-    width: 200px;
-  }
+.sr-only {
+  border: 0 !important;
+  clip: rect(1px, 1px, 1px, 1px) !important; /* 1 */
+  -webkit-clip-path: inset(50%) !important;
+  clip-path: inset(50%) !important; /* 2 */
+  height: 1px !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  position: absolute !important;
+  width: 1px !important;
+  white-space: nowrap !important; /* 3 */
 }
 
 
-/**
- * Keyframes
- */
+@media (min-width: 720px) {
+  #root .cta {
+    flex: 0;
+  }
+}
+
 
  @keyframes loading {
 	from{ transform: rotate(0deg)}

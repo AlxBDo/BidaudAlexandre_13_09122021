@@ -81,7 +81,7 @@ export function startLogin(){
     return async (dispatch, getState) => {
       dispatch(storageServiceAction.start())
       let token = storageServiceAction.getItem('token', true)
-      let rememberUser = storageServiceAction.getItem('rememberUser', false)
+      let rememberUser = storageServiceAction.getItem('rememberUser', false, false)
       if(token){ 
         dispatch(userAction.userMemory())
         dispatch(actions.loggedin(token, rememberUser))
@@ -91,7 +91,7 @@ export function startLogin(){
         if (status === 'loggedin') { return }
         dispatch(userAction.userMemory())
         const user = selectUser()
-        const token = dispatch(
+        const token = await dispatch(
           fetchApiToken(
             user(getState()).email, 
             user(getState()).password, 
@@ -109,7 +109,7 @@ const initialState = {
     token: null,
     rememberUser: false
 }
-
+ 
 /**
  * @name login
  * @description redux component providing the login service to the user
